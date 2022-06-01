@@ -6,7 +6,7 @@
 
 点击：<https://www.bilibili.com/video/BV1fa411j7Q5/>
 
-![](doc/cover.jpg)
+![flowable快速入门-封面](https://tva1.sinaimg.cn/large/007F3CC8ly1h2sqvw26j8j32yo1o0tl8.jpg)
 
 ## 插件安装
 
