@@ -4,7 +4,9 @@
 
 ## 视频教程
 
-<>
+点击：<https://www.bilibili.com/video/BV1fa411j7Q5/>
+
+![](doc/cover.jpg)
 
 ## 插件安装
 
@@ -214,6 +216,18 @@ processed ok!
 > http://localhost:8081/expense/processDiagram?processId=2501
 >
 
+---
+
+## 截图
+
+![image](https://tvax1.sinaimg.cn/large/007F3CC8ly1h2sp53129gj30qk0esacn.jpg)
+
+![image](https://tvax3.sinaimg.cn/large/007F3CC8ly1h2sp5ehtjdj30on0c740p.jpg)
+
+![image](https://tvax4.sinaimg.cn/large/007F3CC8ly1h2sp4gu9jvj31440mo42c.jpg)
+
+---
+
 ## 源码领取
 
 公众号：JavaPub
@@ -229,3 +243,21 @@ flowable
 [https://gitee.com/rodert/springboot-flowable](https://gitee.com/rodert/springboot-flowable)
 
 ---
+
+ 向巨人们致敬！ 
+
+
+
+<a name="公众号"><img src="https://tva4.sinaimg.cn/mw690/007F3CC8ly1h0jpebzb51j3076076glw.jpg" alt="公众号"></a>
+
+
+
+---
+
+---
+
+
+
+P哥微信：
+
+<a name="P哥微信"><img src="https://tva2.sinaimg.cn/large/007F3CC8ly1h2sp83grmzj30bp0bvwgo.jpg" alt="P哥微信"></a>
