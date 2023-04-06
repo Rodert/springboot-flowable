@@ -8,7 +8,7 @@
 
 点击：<https://www.bilibili.com/video/BV1fa411j7Q5/>
 
-![flowable快速入门-封面](https://tva1.sinaimg.cn/large/007F3CC8ly1h2sqvw26j8j32yo1o0tl8.jpg)
+![flowable快速入门-封面](https://ghproxy.com/https://raw.githubusercontent.com/Rodert/springboot-flowable/main/doc/cover.jpg?raw=true)
 
 ## 插件安装
 
