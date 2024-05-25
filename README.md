@@ -225,11 +225,15 @@ processed ok!
 
 ## 截图
 
-![image](https://tvax1.sinaimg.cn/large/007F3CC8ly1h2sp53129gj30qk0esacn.jpg)
 
-![image](https://tvax3.sinaimg.cn/large/007F3CC8ly1h2sp5ehtjdj30on0c740p.jpg)
 
-![image](https://tvax4.sinaimg.cn/large/007F3CC8ly1h2sp4gu9jvj31440mo42c.jpg)
+![image](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154343.jpg)
+
+![image](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154414.jpg)
+
+![](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154422.jpg)
+
+
 
 ---
 
@@ -251,9 +255,7 @@ flowable
 
  向巨人们致敬！ 
 
-
-
-<a name="公众号"><img src="https://tva4.sinaimg.cn/mw690/007F3CC8ly1h0jpebzb51j3076076glw.jpg" alt="公众号"></a>
+<a name="公众号"><img src="https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154448.jpg" alt="公众号"></a>
 
 
 
@@ -265,7 +267,7 @@ flowable
 
 P哥微信：
 
-![微信图片_20220616200142](https://tva1.sinaimg.cn/thumbnail/007F3CC8ly1h3b964cqdjj30e80e8aag.jpg)
+![微信图片_20220616200142](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154502.jpg)
 
 
 
