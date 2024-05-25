@@ -11,8 +11,7 @@
 
 ---
 
-
-![flowable快速入门-封面](https://ghproxy.com/https://raw.githubusercontent.com/Rodert/springboot-flowable/main/doc/cover.jpg?raw=true)
+![img](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-151128.jpeg)
 
 ## 插件安装
 
