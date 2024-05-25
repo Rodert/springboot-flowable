@@ -6,7 +6,11 @@
 
 ## 视频教程
 
-点击：<https://www.bilibili.com/video/BV1fa411j7Q5/>
+[点击观看视频](https://www.bilibili.com/video/BV1fa411j7Q5/) | [点击下载原文](https://mp.weixin.qq.com/s/hWwzSu-SlyTzzzHUrA7OXQ)
+
+
+---
+
 
 ![flowable快速入门-封面](https://ghproxy.com/https://raw.githubusercontent.com/Rodert/springboot-flowable/main/doc/cover.jpg?raw=true)
 
