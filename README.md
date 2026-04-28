@@ -1,10 +1,28 @@
-手把手实现springboot整合flowable、附源码-视频教程
+# springboot-flowable
+
+Spring Boot 整合 Flowable 的入门示例项目。项目用一个“出差报销审批”流程演示 Flowable 的基本用法：启动流程、查询待办、完成任务、驳回任务、查看当前流程图。
 
 [GitHub](https://github.com/Rodert/springboot-flowable) | [Gitee](https://gitee.com/rodert/springboot-flowable)
 
-[toc]
+## 适合谁看
 
-## 版本说明
+如果你刚接触 Flowable、BPMN、工作流，建议先跑通这个项目，再回头看代码。这个项目没有复杂业务系统，只保留了工作流最常见的几个动作：
+
+- 发起一个报销流程
+- 根据报销金额自动走不同审批人
+- 查询某个人的待办任务
+- 审批通过或驳回
+- 在浏览器里查看流程当前走到哪一步
+
+## 技术版本
+
+| 技术 | 版本 |
+| --- | --- |
+| Java | 1.8 |
+| Spring Boot | 2.7.18 |
+| Flowable | 6.8.1 |
+| MySQL 驱动 | `com.mysql:mysql-connector-j` |
+| 构建工具 | Maven |
 
 升级前代码已打 tag：
 
@@ -12,57 +30,93 @@
 git checkout before-springboot-upgrade-20260428
 ```
 
-当前版本：
+## 项目结构
 
-- Spring Boot：2.7.18
-- Flowable：6.8.1
-- Java：1.8
-- MySQL 驱动：com.mysql:mysql-connector-j
-
-## 视频教程
-
-[点击观看视频](https://www.bilibili.com/video/BV1fa411j7Q5/) | [点击下载原文](https://mp.weixin.qq.com/s/hWwzSu-SlyTzzzHUrA7OXQ)
-
-
----
-
-![img](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-151128.jpeg)
-
-## 插件安装
-
-BPMN绘图可视化工具
-
-> Flowable BPMN visualizer
-
-## 导入依赖
-
-```xml
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <!--flowable工作流依赖-->
-        <dependency>
-            <groupId>org.flowable</groupId>
-            <artifactId>flowable-spring-boot-starter</artifactId>
-            <version>6.8.1</version>
-        </dependency>
-        <!--mysql依赖-->
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+```text
+springboot-flowable
+├── pom.xml
+├── src/main/java/com/javapub/flowable/myflowable
+│   ├── SpringbootFlowableApplication.java     # 启动类
+│   ├── conf/FlowableConfig.java               # 流程图中文字体配置
+│   ├── controller/ExpenseController.java      # 报销流程接口
+│   └── task
+│       ├── ManagerTaskHandler.java            # 经理审批任务分配
+│       └── BossTaskHandler.java               # 老板审批任务分配
+└── src/main/resources
+    ├── application.yml                        # 本地运行配置
+    └── processes/ExpenseProcess.bpmn20.xml    # BPMN 流程定义文件
 ```
 
-## 新建数据库
+## 先理解这个流程
 
-database
+这个示例流程叫 `Expense`，流程文件在：
 
-> javapub-flowable2
+```text
+src/main/resources/processes/ExpenseProcess.bpmn20.xml
+```
 
-## 修改配置
+流程大致如下：
+
+```text
+开始
+  |
+出差报销任务，分配给发起人 userId
+  |
+判断报销金额 money
+  |-- money <= 500 --> 经理审批
+  |                     |-- 通过 --> 结束
+  |                     |-- 驳回 --> 回到出差报销
+  |
+  |-- money > 500  --> 老板审批
+                        |-- 通过 --> 结束
+                        |-- 驳回 --> 回到出差报销
+```
+
+这里有一个新手很容易误会的地方：调用 `/expense/add` 只是“发起流程”，流程启动后第一个待办是“出差报销”，它分配给你传入的 `userId`。你需要先完成这个待办，流程才会根据金额进入“经理审批”或“老板审批”。
+
+## 环境准备
+
+### 1. 安装 JDK 8
+
+项目使用 Java 8。确认命令：
+
+```bash
+java -version
+```
+
+看到类似 `1.8.0_xxx` 即可。
+
+### 2. 安装 Maven
+
+确认命令：
+
+```bash
+mvn -version
+```
+
+如果命令不存在，需要先安装 Maven。
+
+### 3. 准备 MySQL
+
+本地启动 MySQL 后，创建数据库：
+
+```sql
+CREATE DATABASE `javapub-flowable2`
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;
+```
+
+注意：第一次启动项目时，Flowable 会自动创建自己的工作流表，例如 `ACT_RU_TASK`、`ACT_RE_PROCDEF`、`ACT_HI_TASKINST` 等，不需要你手动建这些表。
+
+## 配置数据库
+
+配置文件在：
+
+```text
+src/main/resources/application.yml
+```
+
+默认配置如下：
 
 ```yml
 spring:
@@ -72,280 +126,368 @@ spring:
     password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 flowable:
-  #关闭定时任务JOB
   async-executor-activate: false
   database-schema-update: true
 server:
   port: 8081
 ```
 
-**配置说明：**
+如果你的 MySQL 用户名、密码不是 `root` 和空密码，有两种改法。
 
+方式一：直接改 `application.yml`：
 
-> database-schema-update: true
-
-数据库更新策略，其取值有四个：
-
-```xml
-flase：       默认值。activiti在启动时，会对比数据库表中保存的版本，如果没有表或者版本不匹配，将抛出异常。（生产环境常用）
-true：        activiti会对数据库中所有表进行更新操作。如果表不存在，则自动创建。（开发时常用）
-create_drop： 在activiti启动时创建表，在关闭时删除表（必须手动关闭引擎，才能删除表）。（单元测试常用）
-drop-create： 在activiti启动时删除原来的旧表，然后在创建新表（不需要手动关闭引擎）。
+```yml
+spring:
+  datasource:
+    username: root
+    password: 你的密码
 ```
 
+方式二：启动时通过环境变量覆盖：
 
-## 定义流程文件
-
-这里还是用一个开源的流程文件
-
-放在：resources/processes/ExpenseProcess.bpmn20.xml
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xmlns:flowable="http://flowable.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
-             targetNamespace="http://www.flowable.org/processdef">
-    <process id="Expense" name="ExpenseProcess" isExecutable="true">
-        <documentation>报销流程</documentation>
-        <startEvent id="start" name="开始"></startEvent>
-        <userTask id="fillTask" name="出差报销" flowable:assignee="${taskUser}">
-            <extensionElements>
-                <modeler:initiator-can-complete xmlns:modeler="http://flowable.org/modeler">
-                    <![CDATA[false]]></modeler:initiator-can-complete>
-            </extensionElements>
-        </userTask>
-        <exclusiveGateway id="judgeTask"></exclusiveGateway>
-        <userTask id="directorTak" name="经理审批">
-            <extensionElements>
-                <flowable:taskListener event="create"
-                                       class="com.haiyang.flowable.listener.ManagerTaskHandler"></flowable:taskListener>
-            </extensionElements>
-        </userTask>
-        <userTask id="bossTask" name="老板审批">
-            <extensionElements>
-                <flowable:taskListener event="create"
-                                       class="com.haiyang.flowable.listener.BossTaskHandler"></flowable:taskListener>
-            </extensionElements>
-        </userTask>
-        <endEvent id="end" name="结束"></endEvent>
-        <sequenceFlow id="directorNotPassFlow" name="驳回" sourceRef="directorTak" targetRef="fillTask">
-            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outcome=='驳回'}]]></conditionExpression>
-        </sequenceFlow>
-        <sequenceFlow id="bossNotPassFlow" name="驳回" sourceRef="bossTask" targetRef="fillTask">
-            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outcome=='驳回'}]]></conditionExpression>
-        </sequenceFlow>
-        <sequenceFlow id="flow1" sourceRef="start" targetRef="fillTask"></sequenceFlow>
-        <sequenceFlow id="flow2" sourceRef="fillTask" targetRef="judgeTask"></sequenceFlow>
-        <sequenceFlow id="judgeMore" name="大于500元" sourceRef="judgeTask" targetRef="bossTask">
-            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${money > 500}]]></conditionExpression>
-        </sequenceFlow>
-        <sequenceFlow id="bossPassFlow" name="通过" sourceRef="bossTask" targetRef="end">
-            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outcome=='通过'}]]></conditionExpression>
-        </sequenceFlow>
-        <sequenceFlow id="directorPassFlow" name="通过" sourceRef="directorTak" targetRef="end">
-            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outcome=='通过'}]]></conditionExpression>
-        </sequenceFlow>
-        <sequenceFlow id="judgeLess" name="小于500元" sourceRef="judgeTask" targetRef="directorTak">
-            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${money <= 500}]]></conditionExpression>
-        </sequenceFlow>
-    </process>
-    <bpmndi:BPMNDiagram id="BPMNDiagram_Expense">
-        <bpmndi:BPMNPlane bpmnElement="Expense" id="BPMNPlane_Expense">
-            <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_start">
-                <omgdc:Bounds height="30.0" width="30.0" x="285.0" y="135.0"></omgdc:Bounds>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape bpmnElement="fillTask" id="BPMNShape_fillTask">
-                <omgdc:Bounds height="80.0" width="100.0" x="405.0" y="110.0"></omgdc:Bounds>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape bpmnElement="judgeTask" id="BPMNShape_judgeTask">
-                <omgdc:Bounds height="40.0" width="40.0" x="585.0" y="130.0"></omgdc:Bounds>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape bpmnElement="directorTak" id="BPMNShape_directorTak">
-                <omgdc:Bounds height="80.0" width="100.0" x="735.0" y="110.0"></omgdc:Bounds>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape bpmnElement="bossTask" id="BPMNShape_bossTask">
-                <omgdc:Bounds height="80.0" width="100.0" x="555.0" y="255.0"></omgdc:Bounds>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_end">
-                <omgdc:Bounds height="28.0" width="28.0" x="771.0" y="281.0"></omgdc:Bounds>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
-                <omgdi:waypoint x="315.0" y="150.0"></omgdi:waypoint>
-                <omgdi:waypoint x="405.0" y="150.0"></omgdi:waypoint>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
-                <omgdi:waypoint x="505.0" y="150.16611295681062"></omgdi:waypoint>
-                <omgdi:waypoint x="585.4333333333333" y="150.43333333333334"></omgdi:waypoint>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge bpmnElement="judgeLess" id="BPMNEdge_judgeLess">
-                <omgdi:waypoint x="624.5530726256983" y="150.44692737430168"></omgdi:waypoint>
-                <omgdi:waypoint x="735.0" y="150.1392757660167"></omgdi:waypoint>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge bpmnElement="directorNotPassFlow" id="BPMNEdge_directorNotPassFlow">
-                <omgdi:waypoint x="785.0" y="110.0"></omgdi:waypoint>
-                <omgdi:waypoint x="785.0" y="37.0"></omgdi:waypoint>
-                <omgdi:waypoint x="455.0" y="37.0"></omgdi:waypoint>
-                <omgdi:waypoint x="455.0" y="110.0"></omgdi:waypoint>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge bpmnElement="bossPassFlow" id="BPMNEdge_bossPassFlow">
-                <omgdi:waypoint x="655.0" y="295.0"></omgdi:waypoint>
-                <omgdi:waypoint x="771.0" y="295.0"></omgdi:waypoint>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge bpmnElement="judgeMore" id="BPMNEdge_judgeMore">
-                <omgdi:waypoint x="605.4340277777778" y="169.56597222222223"></omgdi:waypoint>
-                <omgdi:waypoint x="605.1384083044983" y="255.0"></omgdi:waypoint>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge bpmnElement="directorPassFlow" id="BPMNEdge_directorPassFlow">
-                <omgdi:waypoint x="785.0" y="190.0"></omgdi:waypoint>
-                <omgdi:waypoint x="785.0" y="281.0"></omgdi:waypoint>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge bpmnElement="bossNotPassFlow" id="BPMNEdge_bossNotPassFlow">
-                <omgdi:waypoint x="555.0" y="295.0"></omgdi:waypoint>
-                <omgdi:waypoint x="455.0" y="295.0"></omgdi:waypoint>
-                <omgdi:waypoint x="455.0" y="190.0"></omgdi:waypoint>
-            </bpmndi:BPMNEdge>
-        </bpmndi:BPMNPlane>
-    </bpmndi:BPMNDiagram>
-</definitions>
+```bash
+MYSQL_USERNAME=root MYSQL_PASSWORD=你的密码 mvn spring-boot:run
 ```
 
-## 测试
+`flowable.database-schema-update=true` 表示启动时自动检查并创建 Flowable 表。开发学习时这样最方便；生产环境不要随便打开，应该由数据库变更脚本管理表结构。
 
-1. 提交流程
+## 启动项目
 
-> http://localhost:8081/expense/add?userId=123&money=2000
+在项目根目录执行：
 
+```bash
+mvn spring-boot:run
+```
+
+启动成功后，服务地址是：
+
+```text
+http://localhost:8081
+```
+
+如果启动时报数据库连接失败，优先检查三件事：
+
+- MySQL 是否已经启动
+- `javapub-flowable2` 数据库是否已经创建
+- `application.yml` 里的用户名和密码是否正确
+
+## 接口体验
+
+下面用浏览器或 Postman 都可以测试。为了方便复制，这里都使用 GET 请求。
+
+### 1. 发起报销流程
+
+```text
+http://localhost:8081/expense/add?userId=123&money=2000&descption=出差打车
+```
+
+返回示例：
+
+```text
 提交成功.流程Id为：2501
+```
 
-2. 待办列表查询
+这里的 `2501` 是流程实例 ID，后面查看流程图时要用。你的本地返回值可能不是 `2501`，以实际返回为准。
 
-> http://localhost:8081/expense/list?userId=123
+参数说明：
 
-Task[id=2507, name=出差报销]
+| 参数 | 示例 | 说明 |
+| --- | --- | --- |
+| `userId` | `123` | 发起人，也是第一个“出差报销”待办的处理人 |
+| `money` | `2000` | 报销金额，决定走经理审批还是老板审批 |
+| `descption` | `出差打车` | 描述字段，当前代码接收了这个参数，但暂时没有保存到流程变量 |
 
-3. 同意
+### 2. 查询发起人的待办
 
-> http://localhost:8081/expense/apply?taskId=2507
+```text
+http://localhost:8081/expense/list?userId=123
+```
 
+返回示例：
+
+```text
+[Task[id=2507, name=出差报销]]
+```
+
+这里的 `2507` 是任务 ID。后面审批通过或驳回时要传 `taskId=2507`。你的任务 ID 以本地实际返回为准。
+
+### 3. 发起人完成“出差报销”任务
+
+```text
+http://localhost:8081/expense/apply?taskId=2507
+```
+
+返回：
+
+```text
 processed ok!
+```
 
-4. 生成流程图
+完成后，流程会根据金额进入下一步：
 
-> http://localhost:8081/expense/processDiagram?processId=2501
->
+- `money <= 500`：进入“经理审批”，任务分配给 `经理`
+- `money > 500`：进入“老板审批”，任务分配给 `老板`
 
----
+### 4. 查询审批人的待办
 
-## 截图
+如果第 1 步传的是 `money=2000`，金额大于 500，查询老板待办：
 
+```text
+http://localhost:8081/expense/list?userId=老板
+```
 
+返回示例：
 
-![image](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154343.jpg)
+```text
+[Task[id=2513, name=老板审批]]
+```
 
-![image](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154414.jpg)
+如果金额小于等于 500，查询经理待办：
 
-![](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154422.jpg)
+```text
+http://localhost:8081/expense/list?userId=经理
+```
 
+### 5. 审批通过
 
+把第 4 步查到的任务 ID 传进去：
 
----
+```text
+http://localhost:8081/expense/apply?taskId=2513
+```
 
-## 源码领取
+返回：
 
-公众号：JavaPub
+```text
+processed ok!
+```
 
-flowable
+审批通过后流程结束，再用这个流程实例 ID 查看流程图时，接口会直接返回空内容，因为代码里写了“流程走完的不显示图”。
 
-## 源码
+### 6. 审批驳回
 
-源码下载：
+如果审批人不同意，可以调用：
 
-[https://github.com/Rodert/springboot-flowable](https://github.com/Rodert/springboot-flowable) 
+```text
+http://localhost:8081/expense/reject?taskId=2513
+```
 
-[https://gitee.com/rodert/springboot-flowable](https://gitee.com/rodert/springboot-flowable)
+返回：
 
----
+```text
+reject
+```
 
- 向巨人们致敬！ 
+驳回后，流程会回到“出差报销”任务，重新分配给发起人。比如最开始 `userId=123`，驳回后再查：
 
-<a name="公众号"><img src="https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154448.jpg" alt="公众号"></a>
+```text
+http://localhost:8081/expense/list?userId=123
+```
 
+就能看到新的“出差报销”待办。
 
+### 7. 查看流程图
 
----
+流程还没有结束时，可以用流程实例 ID 查看当前节点：
 
----
+```text
+http://localhost:8081/expense/processDiagram?processId=2501
+```
 
+浏览器会显示一张 PNG 流程图，并高亮当前正在执行的节点。
 
+如果图片里的中文乱码，重点检查 `FlowableConfig.java` 里的字体配置。当前项目设置为宋体：
 
-P哥微信：
+```java
+engineConfiguration.setActivityFontName("宋体");
+engineConfiguration.setLabelFontName("宋体");
+engineConfiguration.setAnnotationFontName("宋体");
+```
 
-![微信图片_20220616200142](https://javapub-common-oss.oss-cn-beijing.aliyuncs.com/javapub/2024%2F05%2F25%2F20240525-154502.jpg)
+Linux 或 Docker 环境里如果没有宋体，需要安装中文字体，或者改成系统中已经存在的中文字体。
 
+## 完整测试路径
 
+下面是一条完整的大额报销流程：
 
----
+```text
+1. 发起流程
+GET http://localhost:8081/expense/add?userId=123&money=2000
 
+2. 查询 123 的待办，拿到“出差报销”的 taskId
+GET http://localhost:8081/expense/list?userId=123
 
+3. 完成“出差报销”任务
+GET http://localhost:8081/expense/apply?taskId=上一步查到的taskId
 
+4. 查询老板待办，拿到“老板审批”的 taskId
+GET http://localhost:8081/expense/list?userId=老板
 
+5. 老板审批通过
+GET http://localhost:8081/expense/apply?taskId=上一步查到的taskId
+```
 
-## 推荐阅读（附源码-附安装视频）
+小额报销只需要把 `money=2000` 改成 `money=200`，第 4 步查询 `经理` 的待办即可：
 
-`无套路，免费领取`
+```text
+GET http://localhost:8081/expense/list?userId=经理
+```
 
+## 核心代码说明
 
+### 启动流程
 
-中国象棋：[下载地址1](https://javapub.blog.csdn.net/article/details/124503370) | [下载地址2](http://javapub.net.cn/project/game/chinese-chess-game.html)
+代码位置：
 
-植物大战僵尸：[下载地址1](https://javapub.blog.csdn.net/article/details/124238828) | [下载地址2](http://javapub.net.cn/project/game/plants-vs-zombies-game.html)
+```text
+src/main/java/com/javapub/flowable/myflowable/controller/ExpenseController.java
+```
 
-俄罗斯方块：[下载地址1](https://javapub.blog.csdn.net/article/details/124471774) | [下载地址2](http://javapub.net.cn/project/game/super-mario-game.html)
+核心代码：
 
-超级马里奥：[下载地址1](https://javapub.blog.csdn.net/article/details/124463555) | [下载地址2](http://javapub.net.cn/project/game/super-mario-game.html)
+```java
+HashMap<String, Object> map = new HashMap<>();
+map.put("taskUser", userId);
+map.put("money", money);
+ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("Expense", map);
+```
 
-吃豆人游戏：[下载地址1](https://javapub.blog.csdn.net/article/details/124463461) | [下载地址2](http://javapub.net.cn/project/game/super-mario-game.html)
+含义：
 
-打地鼠：[下载地址1](https://javapub.blog.csdn.net/article/details/124463376) | [下载地址2](http://javapub.net.cn/project/game/super-mario-game.html)
+- `Expense` 对应 BPMN 文件里的 `<process id="Expense">`
+- `taskUser` 会被 BPMN 中的 `${taskUser}` 使用，用来指定发起人的待办
+- `money` 会被 BPMN 网关条件使用，用来判断走经理还是老板
 
-捕鱼达人：[下载地址1](https://javapub.blog.csdn.net/article/details/123834030) | [下载地址2](http://javapub.net.cn/project/game/catch-fish-game.html)
+### 查询待办
 
-打飞机：[下载地址1](https://javapub.blog.csdn.net/article/details/123699508) | [下载地址2](http://javapub.net.cn/project/game/super-mario-game.html)
+```java
+taskService.createTaskQuery()
+    .taskAssignee(userId)
+    .orderByTaskCreateTime()
+    .desc()
+    .list();
+```
 
-坦克大战：[下载地址1](https://javapub.blog.csdn.net/article/details/123779963) | [下载地址2](http://javapub.net.cn/project/game/super-mario-game.html)
+含义：查询某个办理人的当前待处理任务。
 
-1024：[下载地址1](https://javapub.blog.csdn.net/article/details/123832950) | [下载地址2](http://javapub.net.cn/project/game/super-mario-game.html)
+### 完成任务
 
-贪吃蛇：[下载地址1](https://javapub.blog.csdn.net/article/details/123833575) | [下载地址2](http://javapub.net.cn/project/game/super-mario-game.html)
+```java
+HashMap<String, Object> map = new HashMap<>();
+map.put("outcome", "通过");
+taskService.complete(taskId, map);
+```
 
-3D赛车：[下载地址1](https://javapub.blog.csdn.net/article/details/124462822) | [下载地址2](http://javapub.net.cn/project/game/3d-racing-game.html)
+`outcome` 会被 BPMN 流程线上的条件表达式使用：
 
+```xml
+${outcome=='通过'}
+${outcome=='驳回'}
+```
 
+### 自动分配审批人
 
+经理任务创建时会执行：
 
-汇总地址：[下载地址1](https://blog.csdn.net/qq_40374604/category_11788364.html) | [下载地址2](http://javapub.net.cn/category/%E5%B0%8F%E6%B8%B8%E6%88%8F/)
+```java
+delegateTask.setAssignee("经理");
+```
 
+老板任务创建时会执行：
 
+```java
+delegateTask.setAssignee("老板");
+```
 
-## 当前目录：
+所以查询审批人待办时，`userId` 要传中文的 `经理` 或 `老板`。
 
-1. [springbootfirstdemo 【springboot入门初始化】](https://github.com/Rodert/SpringBoot-javapub/tree/main/springbootfirstdemo)
-2. [spring-boot整合MyBatis批量更新](https://github.com/Rodert/SpringBoot-javapub/tree/main/spring-boot-mybatis)
-3. [spring-boot自定义注解+AOP切面日志](https://github.com/Rodert/SpringBoot-javapub/tree/main/spring-boot-annotation )
-4. [spring-boot整合docker打包jar](https://github.com/Rodert/SpringBoot-javapub/tree/main/spring-boot-docker)
-5. [spring-boot 整合elasticsearch手脚架](https://github.com/Rodert/SpringBoot-javapub/tree/main/spring-boot-elasticsearch)
-6. [spring-boot整合解析excel](https://github.com/Rodert/SpringBoot-javapub/tree/main/spring-boot-excel)
-7. [spring-boot实现全链路日志traceId](https://github.com/Rodert/SpringBoot-javapub/tree/main/spring-boot-trace)
-8. [springboot整合flowable工作流](https://github.com/Rodert/springboot-flowable)   [GitHub](https://github.com/Rodert/springboot-flowable) | [Gitee](https://gitee.com/rodert/springboot-flowable)
-9. 
+## 常见问题
 
+### 1. 为什么 `/expense/list?userId=老板` 查不到任务？
 
-#### spring
+先确认你是否完成了发起人的“出差报销”任务。刚调用 `/expense/add` 后，流程不会直接到老板审批，而是先给发起人生成一个“出差报销”待办。
 
-1. [firstSpringProject 【spring初始化工程】](firstSpringProject)
-2. [ssm_helloworld_web 【SSM整合】](ssm_helloworld_web)
+大额报销的顺序是：
 
+```text
+add -> list?userId=123 -> apply 发起人的 taskId -> list?userId=老板
+```
 
+### 2. 为什么查经理还是查老板？
 
+看 `money`：
+
+- `money <= 500`：查 `经理`
+- `money > 500`：查 `老板`
+
+### 3. 为什么浏览器打开流程图是空白？
+
+如果流程已经结束，`/expense/processDiagram` 会返回空内容。当前代码里有这一段：
+
+```java
+if (pi == null) {
+    return;
+}
+```
+
+意思是：运行中的流程实例查不到，说明流程已经结束或 ID 不对。
+
+### 4. 启动时提示表不存在怎么办？
+
+确认配置里有：
+
+```yml
+flowable:
+  database-schema-update: true
+```
+
+并确认数据库用户有建表权限。
+
+### 5. 启动时提示数据库连接失败怎么办？
+
+按顺序检查：
+
+- MySQL 是否启动
+- 数据库名是否是 `javapub-flowable2`
+- 用户名、密码是否正确
+- MySQL 地址和端口是否是 `localhost:3306`
+
+### 6. `descption` 是不是拼错了？
+
+是的，英文通常写作 `description`。当前代码参数名是 `descption`，README 按代码实际参数说明，避免你调用接口时对不上。如果要改成 `description`，需要同步修改 Controller 参数和调用地址。
+
+## 单元测试
+
+测试环境使用 H2 内存数据库，配置在：
+
+```text
+src/test/resources/application.yml
+```
+
+执行测试：
+
+```bash
+mvn test
+```
+
+测试环境不会连接你的本地 MySQL。
+
+## 视频教程
+
+[点击观看视频](https://www.bilibili.com/video/BV1fa411j7Q5/) | [点击下载原文](https://mp.weixin.qq.com/s/hWwzSu-SlyTzzzHUrA7OXQ)
+
+## BPMN 插件
+
+如果你想在 IDE 里可视化查看或编辑 BPMN 文件，可以安装：
+
+```text
+Flowable BPMN visualizer
+```
+
+安装后打开：
+
+```text
+src/main/resources/processes/ExpenseProcess.bpmn20.xml
+```
+
+就能看到流程图。
