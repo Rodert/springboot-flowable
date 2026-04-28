@@ -4,6 +4,21 @@
 
 [toc]
 
+## 版本说明
+
+升级前代码已打 tag：
+
+```bash
+git checkout before-springboot-upgrade-20260428
+```
+
+当前版本：
+
+- Spring Boot：2.7.18
+- Flowable：6.8.1
+- Java：1.8
+- MySQL 驱动：com.mysql:mysql-connector-j
+
 ## 视频教程
 
 [点击观看视频](https://www.bilibili.com/video/BV1fa411j7Q5/) | [点击下载原文](https://mp.weixin.qq.com/s/hWwzSu-SlyTzzzHUrA7OXQ)
@@ -31,13 +46,13 @@ BPMN绘图可视化工具
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-spring-boot-starter</artifactId>
-            <version>6.3.0</version>
+            <version>6.8.1</version>
         </dependency>
         <!--mysql依赖-->
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.45</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
         </dependency>
 ```
 
@@ -52,10 +67,10 @@ database
 ```yml
 spring:
   datasource:
-    url: jdbc:mysql://bj-cdb-mw08tjgs.sql.tencentcdb.com:60042/javapub-flowable2?characterEncoding=UTF-8
-    username: root
-    password: password
-    driver-class-name: com.mysql.jdbc.Driver
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/javapub-flowable2?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
 flowable:
   #关闭定时任务JOB
   async-executor-activate: false
@@ -331,7 +346,6 @@ P哥微信：
 
 1. [firstSpringProject 【spring初始化工程】](firstSpringProject)
 2. [ssm_helloworld_web 【SSM整合】](ssm_helloworld_web)
-
 
 
 

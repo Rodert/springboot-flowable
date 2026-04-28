@@ -4,6 +4,24 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Local config ###
+application-local.yml
+application-local.properties
+.env
+.env.*
+!.env.example
+
+### Logs ###
+logs/
+*.log
+*.pid
+
+### macOS ###
+.DS_Store
+
+### Maven ###
+.mvn/timing.properties
+
 ### STS ###
 .apt_generated
 .classpath
