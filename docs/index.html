@@ -15,8 +15,8 @@
       --line: #ded5c8;
       --accent: #c15f3c;
       --accent-dark: #823b24;
-      --code-bg: #26211c;
-      --code-text: #f6eadb;
+      --code-bg: #17120f;
+      --code-text: #fff8ed;
       --radius: 18px;
       --max: 1180px;
     }
@@ -227,8 +227,10 @@
       overflow-x: auto;
       color: var(--code-text);
       font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-      font-size: 14px;
+      font-size: 15px;
+      font-weight: 650;
       line-height: 1.72;
+      letter-spacing: -0.01em;
     }
 
     code {
@@ -310,6 +312,13 @@
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--surface-strong);
+    }
+
+    .run-code {
+      margin-top: 18px;
+      border: 1px solid #000;
+      background: #0f0b09;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 
     .list {
@@ -541,7 +550,7 @@ curl "http://localhost:8081/expense/add?userId=123&amp;money=2000&amp;descption=
         <article class="panel">
           <h3>本地运行</h3>
           <p>确认 MySQL 已创建数据库，然后用 Maven 启动应用。</p>
-          <pre><code>CREATE DATABASE `javapub-flowable2`
+          <pre class="run-code"><code>CREATE DATABASE `javapub-flowable2`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
 
@@ -552,7 +561,7 @@ mvn spring-boot:run</code></pre>
         <article class="panel">
           <h3>Docker Compose</h3>
           <p>同时启动应用和 MySQL，默认暴露应用端口 <code>8081</code>。</p>
-          <pre><code>docker compose up -d --build
+          <pre class="run-code"><code>docker compose up -d --build
 docker compose logs -f app
 docker compose down</code></pre>
         </article>
