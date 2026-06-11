@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>springboot-flowable 开发流程</title>
+  <meta name="description" content="springboot-flowable 示例项目的开发流程、启动方式、接口验证与发布说明。">
+  <style>
+    :root {
+      --ink: #1f241f;
+      --muted: #66705f;
+      --paper: #fffaf0;
+      --card: rgba(255, 255, 255, 0.78);
+      --line: rgba(31, 36, 31, 0.12);
+      --green: #2d6a4f;
+      --moss: #7a8f3f;
+      --gold: #d6a23a;
+      --rust: #b65f3a;
+      --code: #13251c;
+      --shadow: 0 22px 80px rgba(42, 58, 37, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(214, 162, 58, 0.24), transparent 28rem),
+        radial-gradient(circle at 88% 5%, rgba(45, 106, 79, 0.22), transparent 26rem),
+        linear-gradient(135deg, #fff8e8 0%, #eef2dc 52%, #e8efe7 100%);
+      min-height: 100vh;
+    }
+
+    a {
+      color: var(--green);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 64px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      padding: clamp(32px, 7vw, 78px);
+      background:
+        linear-gradient(120deg, rgba(255, 255, 255, 0.86), rgba(255, 250, 240, 0.62)),
+        repeating-linear-gradient(90deg, rgba(45, 106, 79, 0.055) 0 1px, transparent 1px 34px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -110px;
+      top: -130px;
+      width: 310px;
+      height: 310px;
+      border-radius: 999px;
+      background: rgba(122, 143, 63, 0.22);
+      border: 1px solid rgba(45, 106, 79, 0.16);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      margin: 0 0 18px;
+      color: var(--green);
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 36px;
+      height: 2px;
+      background: var(--gold);
+    }
+
+    h1 {
+      max-width: 780px;
+      margin: 0;
+      font-size: clamp(42px, 8vw, 86px);
+      line-height: 0.96;
+      letter-spacing: -0.06em;
+    }
+
+    .lead {
+      max-width: 720px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: clamp(18px, 2.4vw, 24px);
+      line-height: 1.75;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 34px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(45, 106, 79, 0.2);
+      background: #fff;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .button.primary {
+      background: var(--green);
+      color: #fffaf0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 22px;
+      margin-top: 24px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 28px;
+      background: var(--card);
+      box-shadow: 0 16px 50px rgba(42, 58, 37, 0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(26px, 3vw, 36px);
+      letter-spacing: -0.04em;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .steps {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.64);
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      background: rgba(214, 162, 58, 0.2);
+      color: var(--rust);
+      font-weight: 800;
+    }
+
+    code,
+    pre {
+      font-family: "SFMono-Regular", "Cascadia Code", "Liberation Mono", monospace;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 14px 0 0;
+      padding: 18px;
+      border-radius: 18px;
+      background: var(--code);
+      color: #eaf4df;
+      line-height: 1.65;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0;
+      margin: 14px 0 0;
+      list-style: none;
+    }
+
+    .pill-list li {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .flow {
+      display: grid;
+      gap: 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .flow li {
+      position: relative;
+      padding-left: 24px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .flow li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.7em;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--moss);
+      box-shadow: 0 0 0 5px rgba(122, 143, 63, 0.14);
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 820px) {
+      .page {
+        width: min(100% - 20px, 1120px);
+        padding-top: 16px;
+      }
+
+      .hero,
+      .card {
+        border-radius: 22px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .step {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Flowable Starter Guide</p>
+      <h1>springboot-flowable 开发流程</h1>
+      <p class="lead">
+        这是一个 Spring Boot 整合 Flowable 的入门示例。页面把从拉代码、配置数据库、启动服务、验证接口到提交记录的流程串起来，方便新同学快速跑通。
+      </p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/Rodert/springboot-flowable">查看 GitHub 仓库</a>
+        <a class="button" href="https://github.com/Rodert/springboot-flowable#readme">阅读 README</a>
+        <a class="button" href="https://rodert.github.io/jsonformat/">JSON 格式化工具</a>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>推荐开发节奏</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="num">01</div>
+            <div>
+              <h3>准备基础环境</h3>
+              <p>本地开发需要 JDK 8、Maven 和 MySQL。数据库名使用 <code>javapub-flowable2</code>，Flowable 表会在首次启动时自动创建。</p>
+              <pre><code>CREATE DATABASE `javapub-flowable2`
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;</code></pre>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="num">02</div>
+            <div>
+              <h3>配置连接信息</h3>
+              <p>优先通过环境变量覆盖数据库连接，避免把本机密码写进仓库。</p>
+              <pre><code>MYSQL_URL=jdbc:mysql://localhost:3306/javapub-flowable2
+MYSQL_USERNAME=root
+MYSQL_PASSWORD=你的密码</code></pre>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="num">03</div>
+            <div>
+              <h3>启动应用</h3>
+              <p>本地启动适合调试代码，Docker Compose 适合快速拉起完整环境。</p>
+              <pre><code>mvn spring-boot:run
+
+# 或者
+docker compose up --build</code></pre>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="num">04</div>
+            <div>
+              <h3>验证报销流程</h3>
+              <p>先发起流程，再查询待办，随后完成“出差报销”任务，流程会按金额进入经理或老板审批。</p>
+              <pre><code>GET /expense/add?userId=123&amp;money=2000&amp;descption=出差打车
+GET /expense/list?userId=123
+GET /expense/apply?taskId=任务ID</code></pre>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="num">05</div>
+            <div>
+              <h3>记录变更</h3>
+              <p>涉及功能、依赖、配置或行为变更时，在 <code>docs/history/</code> 下新增一份历史记录，方便后续追踪上下文。</p>
+              <pre><code>docs/history/YYYY-MM-DD-change-summary.md</code></pre>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <aside class="card">
+        <h2>项目速览</h2>
+        <p>核心流程是“出差报销审批”：金额不超过 500 走经理审批，超过 500 走老板审批，驳回后回到发起人任务。</p>
+        <ul class="pill-list">
+          <li>Java 8</li>
+          <li>Spring Boot 2.7.18</li>
+          <li>Flowable 6.8.1</li>
+          <li>MySQL 8.0</li>
+          <li>Maven</li>
+          <li>Docker Compose</li>
+        </ul>
+      </aside>
+
+      <aside class="card">
+        <h2>发布到 GitHub Pages</h2>
+        <ul class="flow">
+          <li>进入 GitHub 仓库的 <strong>Settings</strong>。</li>
+          <li>打开 <strong>Pages</strong> 配置。</li>
+          <li>Source 选择 <strong>Deploy from a branch</strong>。</li>
+          <li>Branch 选择 <strong>main</strong>，目录选择 <strong>/docs</strong>。</li>
+          <li>保存后访问 <code>https://rodert.github.io/springboot-flowable/</code>。</li>
+        </ul>
+      </aside>
+
+      <article class="card">
+        <h2>常用命令</h2>
+        <pre><code># 打包
+mvn clean package -DskipTests
+
+# 执行测试
+mvn test
+
+# Docker 启动
+docker compose up -d --build
+
+# 查看应用日志
+docker compose logs -f app
+
+# 停止服务
+docker compose down</code></pre>
+      </article>
+    </section>
+
+    <footer class="footer">
+      springboot-flowable · 用最小示例理解 Flowable 工作流的完整开发闭环
+    </footer>
+  </main>
+</body>
+</html>
