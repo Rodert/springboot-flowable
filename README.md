@@ -2,7 +2,7 @@
 
 Spring Boot 整合 Flowable 的入门示例项目。项目用一个“出差报销审批”流程演示 Flowable 的基本用法：启动流程、查询待办、完成任务、驳回任务、查看当前流程图。
 
-[GitHub](https://github.com/Rodert/springboot-flowable) | [Gitee](https://gitee.com/rodert/springboot-flowable)
+[GitHub](https://github.com/Rodert/springboot-flowable) | [Gitee](https://gitee.com/rodert/springboot-flowable) | [GitHub Pages](https://rodert.github.io/springboot-flowable/)
 
 ## 适合谁看
 
