@@ -153,6 +153,8 @@ MYSQL_USERNAME=root MYSQL_PASSWORD=你的密码 mvn spring-boot:run
 
 ## 启动项目
 
+### 方式一：本地启动
+
 在项目根目录执行：
 
 ```bash
@@ -170,6 +172,60 @@ http://localhost:8081
 - MySQL 是否已经启动
 - `javapub-flowable2` 数据库是否已经创建
 - `application.yml` 里的用户名和密码是否正确
+
+### 方式二：Docker Compose 启动
+
+项目已提供 `Dockerfile` 和 `docker-compose.yml`，会同时启动应用和 MySQL。你只需要本机安装并启动 Docker。
+
+在项目根目录执行：
+
+```bash
+docker compose up --build
+```
+
+启动后服务地址仍然是：
+
+```text
+http://localhost:8081
+```
+
+`docker-compose.yml` 默认配置：
+
+| 服务 | 端口 | 说明 |
+| --- | --- | --- |
+| `app` | `8081:8081` | Spring Boot 应用 |
+| `mysql` | `3306:3306` | MySQL 8.0 |
+
+Docker Compose 会自动创建数据库 `javapub-flowable2`，应用通过下面的环境变量连接容器内的 MySQL：
+
+```yml
+MYSQL_URL: jdbc:mysql://mysql:3306/javapub-flowable2?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+MYSQL_USERNAME: root
+MYSQL_PASSWORD: ""
+```
+
+常用命令：
+
+```bash
+# 后台启动
+docker compose up -d --build
+
+# 查看日志
+docker compose logs -f app
+
+# 停止服务
+docker compose down
+
+# 停止服务并删除 MySQL 数据卷
+docker compose down -v
+```
+
+如果本机已经有 MySQL 占用 `3306` 端口，可以修改 `docker-compose.yml` 中 MySQL 的端口映射，例如改成：
+
+```yml
+ports:
+  - "3307:3306"
+```
 
 ## 接口体验
 
@@ -491,3 +547,7 @@ src/main/resources/processes/ExpenseProcess.bpmn20.xml
 ```
 
 就能看到流程图。
+
+## 开发者在线工具
+
+[JSON 格式化工具](https://rodert.github.io/jsonformat/)
